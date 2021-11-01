@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration
+        PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+        "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+<generatorConfiguration>
+    <!--<classPathEntry location="${jdbc.driverLocation}" />-->
+    <context id="MysqlTables" targetRuntime="MyBatis3">
+        <plugin type="org.mybatis.generator.plugins.SerializablePlugin"/>
+        <plugin type="org.mybatis.generator.plugins.EqualsHashCodePlugin"/>
+        <plugin type="org.mybatis.generator.plugins.ToStringPlugin"/>
+        <plugin type="org.mybatis.generator.plugins.RowBoundsPlugin"/>
+        <commentGenerator>
+            <!-- 去除自动生成的注释 -->
+            <property name="suppressAllComments" value="true" />
+        </commentGenerator>
+
+        <!-- 数据库连接配置 -->
+        <!--<jdbcConnection driverClass="${jdbc.driverClass}"-->
+        <!--connectionURL="${jdbc.connectionURL}"-->
+        <!--userId="${jdbc.userId}"-->
+        <!--password="${jdbc.password}" />-->
+        <jdbcConnection driverClass="com.mysql.jdbc.Driver"
+                        connectionURL="jdbc:mysql://10.241.0.42:3306/kgraph_plugins"
+                        userId="datainfra"
+                        password="Datainfra-2019" />
+
+        <!-- 非必需，类型处理器，在数据库类型和java类型之间的转换控制-->
+        <javaTypeResolver>
+            <property name="forceBigDecimals" value="false"/>
+        </javaTypeResolver>
+
+        <!--配置生成的实体包
+            targetPackage：生成的实体包位置，默认存放在src目录下
+            targetProject：目标工程名
+         -->
+
+        <javaModelGenerator targetPackage="com.bkjk.kgraph.model" targetProject="src/main/java">
+            <property name="trimStrings" value="true" />
+            <property name="enableSubPackages" value="false" />
+        </javaModelGenerator>
+
+        <sqlMapGenerator targetPackage="mapper.mysql"  targetProject="src/main/resources">
+            <property name="enableSubPackages" value="false" />
+        </sqlMapGenerator>
+
+        <javaClientGenerator targetPackage="com.bkjk.kgraph.dao.mysql" targetProject="src/main/java" type="XMLMAPPER">
+            <property name="enableSubPackages" value="false" />
+        </javaClientGenerator>
+
+
+        <!-- 配置表
+            schema：不用填写
+            tableName: 表名
+            enableCountByExample、enableSelectByExample、enableDeleteByExample、enableUpdateByExample、selectByExampleQueryId：
+            去除自动生成的例子
+        -->
+        <table schema="" tableName="plugin_entities" domainObjectName="Plugin" enableCountByExample="true" enableSelectByExample="true"
+               enableDeleteByExample="true" enableUpdateByExample="true" selectByExampleQueryId="true" >
+            <columnOverride column="content" javaType="java.lang.String" jdbcType="VARCHAR" />
+        </table>
+
+        <table schema="" tableName="query_history" domainObjectName="QueryHistory" enableCountByExample="true" enableSelectByExample="true"
+               enableDeleteByExample="true" enableUpdateByExample="true" selectByExampleQueryId="true" >
+            <columnOverride column="content" javaType="java.lang.String" jdbcType="VARCHAR" />
+        </table>
+
+    </context>
+</generatorConfiguration>

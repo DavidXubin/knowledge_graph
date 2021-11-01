@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>图数据浏览器</title>
+
+		<link rel="stylesheet" href="css/graphStyle.css">
+		<link rel="stylesheet" href="css/styles.css">
+		<script src="scripts/jquery-3.2.1.min.js"></script>
+		<script src="scripts/utils.js"></script>
+		<script src="scripts/d3.v4.min.js"></script>
+		<script src="scripts/graphConf.js"></script>
+		<script src="scripts/graphShapes.js"></script>
+		<script src="scripts/infobox.js"></script>
+		<script src="scripts/graph_viz.js"></script>
+		<script src="scripts/graphioGremlin.js"></script>
+		<script src="scripts/editGraph.js"></script>
+		<script src="scripts/graphDictionary.js"></script>
+		<script src="scripts/graphMetaData.js"></script>
+		<script src="scripts/graphTenantMetaData.js"></script>
+		<script src="scripts/graphRiskRadarMetaData.js"></script>
+		<script src="scripts/graphLoanAgentMetaData.js"></script>
+		<script src="scripts/graphRealEstateCompanyMetaData.js"></script>
+		<script src="scripts/graphDCCMetaData.js"></script>
+		<script src="scripts/graphDAMetaData.js"></script>
+		<script src="scripts/graphLineageMetaData.js"></script>
+		<script src="scripts/graphQueryVis.js"></script>
+
+		<script type="text/javascript">
+			let g_page = false;
+
+			function get_graph_info(){
+				graphioGremlin.get_graph_info();
+				document.getElementById ("showgraphinfo").checked = true;
+			}
+			
+			function page_up_cb(data) {
+				if (data[0].length > 0) {
+					graph_viz.clear();
+				}
+
+				d3.select("#search_query").attr("disabled", null);
+				d3.select("#clear_query").attr("disabled", null);
+
+				let limit_field = $('#limit_field').val();
+
+				limit_field = limit_field.trim();
+				if (limit_field === "") {
+					limit_field = node_limit_per_request;
+				}
+
+				limit_field = parseInt(limit_field);
+
+				g_graph_search_result_start_index -= limit_field;
+				if (g_graph_search_result_start_index < 0) {
+					g_graph_search_result_start_index = 0;
+				}
+
+				if (g_graph_search_result_start_index <= limit_field) {
+					d3.select("#page_up").attr("disabled", true);
+				} else {
+					d3.select("#page_up").attr("disabled", null);
+				}
+
+				if (data[0].length >= limit_field) {
+					d3.select("#page_down").attr("disabled", null);
+				} else {
+					d3.select("#page_down").attr("disabled", true);
+				}
+
+			}
+
+			function page_down_cb(data) {
+				if (data[0].length > 0 && g_page) {
+					graph_viz.clear();
+				}
+
+				d3.select("#search_query").attr("disabled", null);
+				d3.select("#clear_query").attr("disabled", null);
+
+				let limit_field = $('#limit_field').val();
+
+				limit_field = limit_field.trim();
+				if (limit_field === "") {
+					limit_field = node_limit_per_request;
+				}
+
+				limit_field = parseInt(limit_field);
+
+				if (g_graph_search_result_start_index > 0) {
+					d3.select("#page_up").attr("disabled", null);
+				} else {
+					d3.select("#page_up").attr("disabled", true);
+				}
+
+				if (data[0].length >= limit_field) {
+					g_graph_search_result_start_index += data[0].length;
+
+					d3.select("#page_down").attr("disabled", null);
+				} else {
+					d3.select("#page_down").attr("disabled", true);
+				}
+			}
+
+			function search_query(){
+				g_graph_search_result_start_index = 0;
+
+				d3.select("#search_query").attr("disabled", true);
+				d3.select("#clear_query").attr("disabled", true);
+
+				d3.select("#page_up").attr("disabled", true);
+				d3.select("#page_down").attr("disabled", true);
+
+				g_page = false;
+				graphioGremlin.search_query(g_graph_search_result_start_index, page_down_cb);
+			}
+			
+			function search_page_up() {
+				d3.select("#search_query").attr("disabled", true);
+				d3.select("#clear_query").attr("disabled", true);
+
+				d3.select("#page_up").attr("disabled", true);
+				d3.select("#page_down").attr("disabled", true);
+
+				let limit_field = $('#limit_field').val();
+
+				limit_field = limit_field.trim();
+				if (limit_field === "") {
+					limit_field = node_limit_per_request;
+				}
+
+				limit_field = parseInt(limit_field);
+
+				let current_idx = g_graph_search_result_start_index;
+				current_idx -= 2 * limit_field;
+				if (current_idx < 0) {
+					current_idx = 0;
+				}
+
+				g_page = true;
+				graphioGremlin.search_query(current_idx, page_up_cb);
+            }
+
+			function search_page_down() {
+				d3.select("#search_query").attr("disabled", true);
+				d3.select("#clear_query").attr("disabled", true);
+
+				d3.select("#page_up").attr("disabled", true);
+				d3.select("#page_down").attr("disabled", true);
+
+				g_page = true;
+				graphioGremlin.search_query(g_graph_search_result_start_index, page_down_cb);
+			}
+
+			function clear_search_results() {
+				g_graph_search_result_start_index = 0;
+
+				d3.select("#page_up").attr("disabled", true);
+				d3.select("#page_down").attr("disabled", true);
+
+				graph_viz.clear();
+			}
+
+		</script>
+	<!-- ------------------------------------------------- -->
+	</head>
+	<body>
+		<div class="nav-bar">
+			<div class="nav container" id="entity_search_bar">
+				<!--div class="nav inputs_container_top"-->
+				<div class="nav inputs_container_top">
+					<div class="nav input_unit_container">
+						<label for="label_field">实体:</label>
+						<select name="label_field" id="label_field" > 
+						</select>
+					</div>
+					<div class="nav input_unit_container">
+						<label for="search_field">实体属性:</label>
+						<select name="search_field" id="search_field"> 
+						</select>
+					</div>
+					<div class="nav input_unit_container">
+						<label for="search_type">实体搜索类型:</label>
+						<select name="search_type" id="search_type">
+						</select>
+					</div>
+					<div class="nav input_unit_container">
+						<label class="nav input_label" for="search_value">实体属性值:</label>
+						<input name="search_value" id="search_value" value="" />
+					</div>
+					<div class="nav input_unit_container">
+						<label id="graph_name"> </label>
+					</div>
+				</div>
+			</div>
+			<div class="nav container" id="relation_search_bar">
+				<!--div class="nav inputs_container_top"-->
+				<div class="nav inputs_container_middle">
+					<div class="nav input_unit_container">
+						<label class="nav input_label" for="edge_label">选择边:</label>
+						<select name="edge_label" id="edge_label">
+						</select>
+					</div>
+					<div class="nav input_unit_container">
+						<label for="search_field">关系属性:</label>
+						<select name="search_field" id="edge_search_field"> 
+						</select>
+					</div>
+					<div class="nav input_unit_container">
+						<label for="search_type">关系搜索类型:</label>
+						<select name="search_type" id="edge_search_type">
+						</select>
+					</div>
+					<div class="nav input_unit_container">
+						<label class="nav input_label" for="search_value">关系属性值:</label>
+						<input name="search_value" id="edge_search_value" value="" />
+					</div>
+				</div>
+			</div>
+			<div class="nav container" id="edge_graph_bar">
+				<div class="nav inputs_container_middle">
+					<div class="nav input_unit_container">
+						<label class="nav input_label"></label>
+						<!--label class="nav input_label" for="edge_filter">选择关系/边:</label-->
+						<!--input name="edge_filter" id="edge_filter" value="" /-->
+						<!--select name="edge_filter" id="edge_filter">
+						</select-->
+					</div>
+					<div class="nav input_unit_container">
+						<label class="nav input_label" for="edge_degree_filter">选择关系边类型:</label>
+						<!--input name="edge_filter" id="edge_filter" value="" /-->
+						<select name="edge_degree_filter" id="edge_degree_filter">
+						</select>
+					</div>
+					<div class="nav input_unit_container">
+						<label for="degree_search_type">入度边/出度边搜索类型:</label>
+						<select name="degree_search_type" id="degree_search_type">
+						</select>
+					</div>
+					<div class="nav input_unit_container">
+						<label class="nav input_label" for="degree_search_value">入度边/出度边数量:</label>
+						<input name="degree_search_value" id="degree_search_value" value="0" min="1" max="1000" type="number"/>
+					</div>
+					<div class="nav input_unit_container">
+						<button name="search query" id="search_query" onclick="search_query();">搜索</button>
+					</div>
+					<div class="nav input_unit_container">
+						<button name="page_up" id="page_up" onclick="search_page_up();">上页</button>
+					</div>
+				</div>
+
+			</div>
+			<div class="nav container" id="common_graph_bar">
+				<div class="nav inputs_container_bottom">
+					<div class="nav input_unit_container">
+						<label for="limit_field">限制结果数量:</label>
+						<input name="limit_field" id="limit_field" value="50" min="1" max="1000" type="number"/>
+					</div>
+					<div class="nav input_unit_container">
+						<label class="nav input_label" for="nbLayers">堆叠层数</label>
+						<input type="number" id="nbLayers" min="1" max="128" onclick="set_nb_layers()">
+					</div>
+					<div class="nav input_unit_container">
+						<input type="checkbox" name="Freeze" id="freeze-in" />
+						<label class="nav input_label" for="freeze-in">搜索冻结</label>
+					</div>
+					<div class="nav input_unit_container">
+						<input type="checkbox" name="showName_box" id="showName" onclick="graphShapes.show_names()" checked/>
+						<label class="nav input_label" for="showName">显示标签</label>
+					</div>
+					<div class="nav input_unit_container">
+						<button name="clear" id="clear_query" onclick="clear_search_results();">清理</button>
+					</div>
+					<div class="nav input_unit_container">
+						<button name="page_down" id="page_down" onclick="search_page_down();">下页</button>
+					</div>
+				</div>
+
+			</div>
+		</div>
+		<div class="content">
+			<div class="main" id="main">
+				<svg></svg>
+			</div>
+
+			<div class="aside left_bar" style="background-color:transparent;pointer-events:auto;">
+				<div  id="graphInfoBar" style="background-color:transparent;pointer-events:auto;">
+					<button name="graphInfo" onclick="get_graph_info();">获取图信息</button>
+					<input type="checkbox" name="showgraphinfo" id="showgraphinfo" onchange="show_hide_element('#graphInfo')"/>显示/隐藏图信息
+				</div>
+				<div  id="graphInfo" style="background-color:transparent;pointer-events:none;">
+				</div>
+			</div>
+
+			<div class="aside right_bar" id="details" style="background-color:transparent;pointer-events:auto;">
+				<div id="messageArea"></div><div id="outputArea"></div>
+				<div id="nodeInfo" style="background-color:transparent;overflow:scroll; height:400px;">
+				</div>
+			</div>
+		</div>
+
+		<!-- INITIALIZATION -->
+		<script type="text/javascript">
+			init_property_bar();
+			init_page_button();
+
+			graph_viz.init("#main");
+			// Add the zoom layer to the graph
+			graph_viz.addzoom();
+
+			infobox.create("#graphInfo","#nodeInfo");
+
+			display_graph_name();
+			display_node_label_choice();
+			display_edge_label_choice();
+
+			display_edge_degree_choice();
+			display_edge_degree_predicate_choice();
+
+			function init_property_bar(){
+				document.getElementById('nbLayers').value = default_nb_of_layers;
+			}
+
+			function init_page_button() {
+				d3.select("#page_up").attr("disabled", true);
+				d3.select("#page_down").attr("disabled", true);
+			}
+
+			function change_nav_bar(node_data){
+				var nav_bar = d3.select("#prop_choice");
+				nav_bar.select("input").remove();
+				nav_bar.select("select").remove();
+
+				var select = d3.select('#prop_choice')
+					.append('select').attr('class','select').attr('id','search_field');
+
+				var select_node = select.append('optgroup').attr('label','Nodes');
+
+				var node_options = select_node
+					.selectAll('option')
+					.data(node_data).enter()
+					.append('option')
+					.text(function (d) { return d; });
+			}
+
+			function display_properties_bar(prop_list,item,text){
+				var nav_bar = d3.select("#graphInfoBar");
+				nav_bar.select("#property_bar_"+item).remove();
+				var property_bar = nav_bar.append("div").attr("id","property_bar_"+item);
+				property_bar.append('text').text(text).style("font-weight","bold");
+				var property_label = property_bar.selectAll('input').append("ul")
+					.data(prop_list).enter().append("li");
+
+				property_label.append('input').attr('type','checkbox').attr('id',function (d) { return item+"_"+d; })
+					.attr('id_nb',function (d) { return prop_list.indexOf(d); })
+					.attr('onchange','display_prop(this)');
+
+				property_label.append('label').text(function (d) { return d; });
+			}
+
+			function display_color_choice(prop_list,item,text){
+				prop_list = ['label'].concat(prop_list);
+				var nav_bar = d3.select("#graphInfoBar");
+				nav_bar.select("#color_choice_"+item).remove();
+				var color_bar = nav_bar.append("div").attr("id","color_choice_"+item);
+				color_bar.append("div").append("text").text(text).style("font-weight","bold");
+				color_bar.append("div").append("select").attr("class","select").attr("id","color_select_"+item)
+					.attr("onchange","colorize(this)")
+					.selectAll("option")
+					.data(prop_list).enter()
+					.append("option")
+					.text(function (d) { return d; });
+			}
+
+			function colorize(selection){
+				var value = selection.value;
+				console.log('Color by '+ value);
+				graphShapes.colorize(value);
+
+			}
+
+			function init_graph_colors(){
+				graphShapes.colorize("label");
+				graphShapes.colorize("tag");
+			}
+
+			function show_labels(){
+				graphShapes.show_names()
+			}
+
+			function display_prop(prop){
+				var prop_id = prop.id;
+				var prop_id_nb = prop.getAttribute('id_nb');
+				var prop_name = prop_id.slice(prop_id.indexOf("_") + 1);
+				var item = prop_id.slice(0, prop_id.indexOf("_"));
+				console.log(prop_id, item);
+				if (d3.select("#" + prop_id).property("checked")) {
+					let elements_text;
+
+					if (item ==='nodes'){
+						elements_text = d3.selectAll('.node');
+					} else if (item ==='edges'){
+						elements_text = d3.selectAll('.edgelabel');
+					}
+					attach_property(elements_text, prop_name, prop_id_nb, item, false);
+
+				} else {
+					if (item ==='nodes') {
+						let elements_text = d3.selectAll('.node');
+						while (!elements_text.select('.' + prop_id).empty()) {
+							elements_text.select('.' + prop_id).remove();
+						}
+
+					} else if (item === 'edges'){
+						d3.selectAll('.edgelabel').select('.'+prop_id).remove();
+					}
+				}
+			}
+
+
+			function attach_property(graph_objects, prop_name, prop_id_nb, item, refresh_all_items){
+
+				var prop_id = item + "_" + prop_name;
+				if (item ==='nodes'){
+  					elements_text = graph_objects.append("text").style("pointer-events", "none");
+				} else if (item ==='edges'){
+					var elements_text = graph_objects.append("textPath")
+						.attr('class','edge_text')
+						.attr('href', function (d, i) {return '#edgepath' + d.id})
+						.style("text-anchor", "middle")
+						.style("pointer-events", "none")
+						.attr("startOffset", "70%");
+
+					//prop_id_nb = prop_id_nb + 1;
+				} else {
+					console.log('Bad item name.'); return 1;
+				}
+
+				elements_text.classed("prop_details",true).classed(prop_id, true)
+						.attr("dy",function(d){return get_prop_position(d, prop_name, item, refresh_all_items);})
+						.text(function(d){return get_prop_value(d, prop_name, item);});
+			}
+
+			function get_prop_position(d, prop_name, item, refresh_all_items) {
+				const text_base_offset = 10;
+				const text_offset = 10;
+
+				const display_properties = get_graph_default_display_properties(d.label);
+
+				let pos_idx = display_properties.indexOf(prop_name);
+
+				if (pos_idx >= 0) {
+					return graphShapes.node_size(d) + text_base_offset + text_offset * (pos_idx + 1);
+				}
+
+				const checked_prop_names = Object.keys(d.properties).filter(prop_name => {
+					const prop_id = item + "_" + prop_name;
+					return !d3.select("#" + prop_id).empty() && d3.select("#" + prop_id).property("checked") &&
+							!display_properties.includes(prop_name)
+				});
+
+				if (refresh_all_items) {
+					pos_idx = checked_prop_names.indexOf(prop_name) + display_properties.length + 1;
+				} else {
+					pos_idx = checked_prop_names.length + display_properties.length;
+				}
+				return graphShapes.node_size(d) + text_base_offset + text_offset * pos_idx;
+			}
+
+
+			function get_prop_value(d, prop_name, item){
+
+				const display_properties = get_graph_default_display_properties(d.label);
+
+				if (prop_name in d.properties){
+
+					const prop_id = item + "_" + prop_name;
+
+					if ((d3.select("#" + prop_id).empty() || !d3.select("#" + prop_id).property("checked"))
+							&& (!display_properties.includes(prop_name))) {
+						return "";
+					}
+
+					const prop_value = d.properties[prop_name];
+					if (item === 'nodes') {
+
+						if (typeof prop_value === "string"){
+							return prop_value;
+						} else {
+							if ('summary' in prop_value) {
+								return prop_value['summary'];
+							}
+						}
+					} else if (item === 'edges'){
+						return d.properties[prop_name];
+					}
+				} else {
+					return "";
+				}
+			}
+
+			function set_nb_layers(){
+				const nb_layers = parseInt(document.getElementById('nbLayers').value);
+				console.log(nb_layers);
+				graph_viz.layers.set_nb_layers(nb_layers);
+			}
+
+			function show_hide_element(element_label){
+				const element = d3.select(element_label);
+				const input = document.getElementById("showgraphinfo");
+				const isChecked = input.checked;
+				if (isChecked) element.style("display", "inline");
+				else {element.style("display", "none");}
+			}
+
+		</script>
+	</body>
+</html>

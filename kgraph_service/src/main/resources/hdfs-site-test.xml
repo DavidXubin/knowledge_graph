@@ -1,0 +1,18 @@
+<configuration>
+    <property>
+        <name>dfs.replication</name>
+        <value>2</value>
+    </property>
+    <property>
+        <name>dfs.namenode.name.dir</name>
+        <value>/data/namenode</value>
+    </property>
+    <property>
+        <name>dfs.datanode.data.dir</name>
+        <value>/data/datanode</value>
+    </property>
+    <property>
+        <name>dfs.http.address</name>
+        <value>app-000027.m6v.bkjk.cn:50070</value>
+    </property>
+</configuration>

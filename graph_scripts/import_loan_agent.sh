@@ -1,0 +1,26 @@
+#!/bin/bash
+
+./run.sh import /data/software/janusgraph_release/janusgraph-full-0.5.1/conf/gremlin-server/loan_agent-janusgraph-hbase-server.properties loan_agent/address loan_agent/address/schema.json loan_agent/address/datamapper.json vertex
+./run.sh import /data/software/janusgraph_release/janusgraph-full-0.5.1/conf/gremlin-server/loan_agent-janusgraph-hbase-server.properties loan_agent/borrower/ loan_agent/borrower/schema.json loan_agent/borrower/datamapper.json vertex
+./run.sh import /data/software/janusgraph_release/janusgraph-full-0.5.1/conf/gremlin-server/loan_agent-janusgraph-hbase-server.properties loan_agent/device/ loan_agent/device/schema.json loan_agent/device/datamapper.json vertex
+./run.sh import /data/software/janusgraph_release/janusgraph-full-0.5.1/conf/gremlin-server/loan_agent-janusgraph-hbase-server.properties loan_agent/shop/ loan_agent/shop/schema.json loan_agent/shop/datamapper.json vertex
+./run.sh import /data/software/janusgraph_release/janusgraph-full-0.5.1/conf/gremlin-server/loan_agent-janusgraph-hbase-server.properties loan_agent/area/ loan_agent/area/schema.json loan_agent/area/datamapper.json vertex
+./run.sh import /data/software/janusgraph_release/janusgraph-full-0.5.1/conf/gremlin-server/loan_agent-janusgraph-hbase-server.properties loan_agent/contact/ loan_agent/contact/schema.json loan_agent/contact/datamapper.json vertex
+./run.sh import /data/software/janusgraph_release/janusgraph-full-0.5.1/conf/gremlin-server/loan_agent-janusgraph-hbase-server.properties loan_agent/ip/ loan_agent/ip/schema.json loan_agent/ip/datamapper.json vertex
+./run.sh import /data/software/janusgraph_release/janusgraph-full-0.5.1/conf/gremlin-server/loan_agent-janusgraph-hbase-server.properties loan_agent/phone/ loan_agent/phone/schema.json loan_agent/phone/datamapper.json vertex
+./run.sh import /data/software/janusgraph_release/janusgraph-full-0.5.1/conf/gremlin-server/loan_agent-janusgraph-hbase-server.properties loan_agent/market/ loan_agent/market/schema.json loan_agent/market/datamapper.json vertex
+./run.sh import /data/software/janusgraph_release/janusgraph-full-0.5.1/conf/gremlin-server/loan_agent-janusgraph-hbase-server.properties loan_agent/region/ loan_agent/region/schema.json loan_agent/region/datamapper.json vertex
+./run.sh import /data/software/janusgraph_release/janusgraph-full-0.5.1/conf/gremlin-server/loan_agent-janusgraph-hbase-server.properties loan_agent/team/ loan_agent/team/schema.json loan_agent/team/datamapper.json vertex
+
+./run.sh import /data/software/janusgraph_release/janusgraph-full-0.5.1/conf/gremlin-server/loan_agent-janusgraph-hbase-server.properties loan_agent/borrower_device/ loan_agent/borrower_device/schema.json loan_agent/borrower_device/datamapper.json edge
+./run.sh import /data/software/janusgraph_release/janusgraph-full-0.5.1/conf/gremlin-server/loan_agent-janusgraph-hbase-server.properties loan_agent/borrower_team/ loan_agent/borrower_team/schema.json loan_agent/borrower_team/datamapper.json edge
+./run.sh import /data/software/janusgraph_release/janusgraph-full-0.5.1/conf/gremlin-server/loan_agent-janusgraph-hbase-server.properties loan_agent/market_region/ loan_agent/market_region/schema.json loan_agent/market_region/datamapper.json edge
+./run.sh import /data/software/janusgraph_release/janusgraph-full-0.5.1/conf/gremlin-server/loan_agent-janusgraph-hbase-server.properties loan_agent/team_shop/ loan_agent/team_shop/schema.json loan_agent/team_shop/datamapper.json edge
+./run.sh import /data/software/janusgraph_release/janusgraph-full-0.5.1/conf/gremlin-server/loan_agent-janusgraph-hbase-server.properties loan_agent/borrower_address/ loan_agent/borrower_address/schema.json loan_agent/borrower_address/datamapper.json edge
+./run.sh import /data/software/janusgraph_release/janusgraph-full-0.5.1/conf/gremlin-server/loan_agent-janusgraph-hbase-server.properties loan_agent/borrower_ip/ loan_agent/borrower_ip/schema.json loan_agent/borrower_ip/datamapper.json edge
+./run.sh import /data/software/janusgraph_release/janusgraph-full-0.5.1/conf/gremlin-server/loan_agent-janusgraph-hbase-server.properties loan_agent/shop_area/ loan_agent/shop_area/schema.json loan_agent/shop_area/datamapper.json edge
+./run.sh import /data/software/janusgraph_release/janusgraph-full-0.5.1/conf/gremlin-server/loan_agent-janusgraph-hbase-server.properties loan_agent/area_market/ loan_agent/area_market/schema.json loan_agent/area_market/datamapper.json edge
+./run.sh import /data/software/janusgraph_release/janusgraph-full-0.5.1/conf/gremlin-server/loan_agent-janusgraph-hbase-server.properties loan_agent/borrower_contact/ loan_agent/borrower_contact/schema.json loan_agent/borrower_contact/datamapper.json edge
+./run.sh import /data/software/janusgraph_release/janusgraph-full-0.5.1/conf/gremlin-server/loan_agent-janusgraph-hbase-server.properties loan_agent/borrower_phone/ loan_agent/borrower_phone/schema.json loan_agent/borrower_phone/datamapper.json edge
+./run.sh import /data/software/janusgraph_release/janusgraph-full-0.5.1/conf/gremlin-server/loan_agent-janusgraph-hbase-server.properties loan_agent/contact_phone/ loan_agent/contact_phone/schema.json loan_agent/contact_phone/datamapper.json edge
+

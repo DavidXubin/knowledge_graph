@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:lang="http://www.springframework.org/schema/lang" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/lang http://www.springframework.org/schema/lang/spring-lang.xsd">
+
+    <context:property-placeholder location="classpath:props/kgraph_service.properties" />
+    <context:annotation-config />
+
+    <lang:defaults refresh-check-delay="60000" />
+
+    <lang:groovy id="getProperty" script-source="file:${res.projectPath}/${groovy.script.packagePath}/GremlinGetProperties.groovy"/>
+
+    <lang:groovy id="searchNodes" script-source="file:${res.projectPath}/${groovy.script.packagePath}/GremlinSearchNodes.groovy" />
+
+    <lang:groovy id="searchEdges" script-source="file:${res.projectPath}/${groovy.script.packagePath}/GremlinSearchEdges.groovy" />
+
+    <lang:groovy id="searchNodeEdges" script-source="file:${res.projectPath}/${groovy.script.packagePath}/GremlinSearchNodeEdges.groovy" />
+
+    <lang:groovy id="getAdjacentNodes" script-source="file:${res.projectPath}/${groovy.script.packagePath}/GremlinGetAdjacentNodes.groovy" />
+
+    <lang:groovy id="getAdjacentEdges" script-source="file:${res.projectPath}/${groovy.script.packagePath}/GremlinGetAdjacentEdges.groovy" />
+
+    <lang:groovy id="getAdjacentNodesEdges" script-source="file:${res.projectPath}/${groovy.script.packagePath}/GremlinGetAdjacentNodesEdges.groovy" />
+
+    <lang:groovy id="getAllGraphNames" script-source="file:${res.projectPath}/${groovy.script.packagePath}/GremlinGetAllGraphNames.groovy" />
+
+    <lang:groovy id="getGraphMeta" script-source="file:${res.projectPath}/${groovy.script.packagePath}/GremlinGetGraphMeta.groovy" />
+
+
+    <lang:groovy id="graphRelationCount" script-source="file:${res.projectPath}/${groovy.script.packagePath}/GremlinGetGraphRelationCount.groovy" />
+
+    <lang:groovy id="clientSubmit" script-source="file:${res.projectPath}/${groovy.script.packagePath}/GremlinClientSubmit.groovy" />
+
+    <lang:groovy id="OLAPConnectedComponent" script-source="file:${res.projectPath}/${groovy.script.packagePath}/GremlinOLAPConnectedComponent.groovy" />
+
+</beans>

@@ -1,0 +1,436 @@
+////
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+////
+[[development-environment]]
+= Development Environment
+
+TinkerPop is fairly large body of code spread across many modules and covering multiple programming languages. Despite
+this complexity, it remains relatively straightforward a project to build. This following subsections explain how to
+configure a development environment for TinkerPop.
+
+[[system-configuration]]
+== System Configuration
+
+At a minimum, development of TinkerPop requires link:http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html[Java 1.8.0_40+]
+and link:https://maven.apache.org/download.cgi[Maven 3.2.5+]. Maven is used as the common build system, which even
+controls the builds of non-JVM link:http://tinkerpop.apache.org/docs/current/tutorials/gremlin-language-variants/[GLVs]
+such as `gremlin-python`. Java and Maven are described as a "minimum" for a development environment, because they
+will only build JVM portions of TinkerPop and many integration tests will not fire with this simple setup. It is
+possible to get a clean and successful build with this minimum, but it will not be possible to build non-JVM aspects
+of the project and those will go untested.
+
+To gain the ability to execute all aspects of the TinkerPop build system, other environmental configurations must be
+established. Those prerequisites are defined in the following subsections.
+
+IMPORTANT: For those who intend to offer a contribution, building with a minimal configuration may not be sufficient
+when submitting a pull request. Consider setting up the full environment.
+
+NOTE: For those using Windows, efforts have been made to keep the build OS independent, but, in practice, it is likely
+that TinkerPop's build system will only allow for a minimum build at best.
+
+[[groovy-environment]]
+=== Groovy Environment
+
+Groovy is not used in the standard build, but when generating documentation it does require the loading of a Gremlin
+Console instance. The Gremlin Console is Groovy-based and the documentation bootstrapping loads TinkerPop plugins
+which requires proper configuration of Graph/Ivy dependency loaders as described in the
+link:http://tinkerpop.apache.org/docs/x.y.z/reference/#gremlin-applications[Gremlin Applications Section] of the
+Reference Documentation.
+
+The base configuration described in that link may need to be modified if there is a desire to work with the Gremlin
+Console (for documentation generation or just general testing) in a way that utilizes SNAPSHOT releases in the
+Apache Snapshots Repository. In that case, the `grapeConfig.xml` will need to include a resolver for that repository
+and the basic Ivy configuration will look as follows:
+
+[source,xml]
+----
+<ivysettings>
+  <settings defaultResolver="downloadGrapes"/>
+  <resolvers>
+    <chain name="downloadGrapes" returnFirst="true">
+      <filesystem name="cachedGrapes">
+        <ivy pattern="${user.home}/.groovy/grapes/[organisation]/[module]/ivy-[revision].xml"/>
+        <artifact pattern="${user.home}/.groovy/grapes/[organisation]/[module]/[type]s/[artifact]-[revision](-[classifier]).[ext]"/>
+      </filesystem>
+      <ibiblio name="localm2" root="${user.home.url}/.m2/repository/" checkmodified="true" changingPattern=".*" changingMatcher="regexp" m2compatible="true"/>
+      <ibiblio name="jcenter" root="https://jcenter.bintray.com/" m2compatible="true"/>
+      <ibiblio name="ibiblio" m2compatible="true"/>
+      <ibiblio name="apache-snapshots" root="http://repository.apache.org/snapshots/" m2compatible="true"/>
+    </chain>
+  </resolvers>
+</ivysettings>
+----
+
+The above configuration is just a modification of the default. Perhaps the most lean common configuration might just
+be:
+
+[source,xml]
+----
+<ivysettings>
+  <settings defaultResolver="downloadGrapes"/>
+  <resolvers>
+    <chain name="downloadGrapes">
+      <ibiblio name="local" root="file:${user.home}/.m2/repository/" m2compatible="true"/>
+      <ibiblio name="central" root="https://repo1.maven.org/maven2/" m2compatible="true"/>
+    </chain>
+  </resolvers>
+</ivysettings>
+----
+
+In the above case, the configuration largely relies on the standard Maven builds to create a well cached `.m2`
+directory. Under typical development circumstances, SNAPSHOT will find themselves deployed there locally and that
+is all that will be required for Grape to do its work.
+
+As a final word, it is important to take note of the order used for these references as Grape will check them in the order
+they are specified and depending on that order, an artifact other than the one expected may be used which is typically
+an issue when working with SNAPSHOT dependencies.
+
+[[documentation-environment]]
+=== Documentation Environment
+
+The documentation generation process is not Maven-based and uses shell scripts to process the project's asciidoc. The
+scripts should work on Mac and Linux.
+
+To generate documentation, it is required that link:https://hadoop.apache.org[Hadoop 2.7.x] is running in
+link:https://hadoop.apache.org/docs/r2.7.2/hadoop-project-dist/hadoop-common/SingleCluster.html#Pseudo-Distributed_Operation[pseudo-distributed]
+mode. Be sure to set the `HADOOP_GREMLIN_LIBS` environment variable as described in the
+link:http://tinkerpop.apache.org/docs/current/reference/#hadoop-gremlin[reference documentation]. It is also important
+to set the `CLASSPATH` to point at the directory containing the Hadoop configuration files, like `mapred-site.xml`.
+
+Also note that link:http://www.grymoire.com/Unix/Awk.html[awk] version `4.0.1` is required for documentation generation.
+
+Documentation can be generated locally with:
+
+[source,text]
+bin/process-docs.sh
+
+Documentation is generated to the `target/docs` directory. It is also possible to generate documentation locally with
+Docker. `docker/build.sh -d`.
+
+To generate the web site locally, there is no need for any of the above infrastructure. Site generation is a simple
+shell script:
+
+[source,text]
+bin/generate-home.sh
+
+The site will be generated to the `target/site/home` directory.
+
+[[python-environment]]
+=== Python Environment
+
+As of TinkerPop 3.2.2, the build optionally requires link:https://www.python.org/[Python] to build the `gremlin-python`
+module. If Python is not installed, TinkerPop will still build with Maven, but native Python tests and
+Java tests that require Python code will be skipped. Developers should also install link:https://pypi.python.org/pypi/pip[pip]
+and link:https://virtualenv.pypa.io/en/stable/[virtualenv] (version 15.0.2 - older versions may cause build failures).
+
+The build expects two Python executables `python` and `python3` where `python` maps to 2.7.6 and `python3` is 3.4.3 or
+higher. Once the Python environment is established, the full building and testing of `gremlin-python` may commence. It
+can be done manually from the command line with:
+
+[source,text]
+mvn clean install -Pglv-python
+
+which enables the "glv-python" Maven profile or in a more automated fashion simply add a `.glv` file to the root of the
+`gremlin-python` module which will signify to Maven that the environment is Python-ready. The `.glv` file need not have
+any contents and is ignored by Git. A standard `mvn clean install` will then build `gremlin-python` in full.
+
+As of TinkerPop 3.2.5, the build also requires Python to execute `gremlin-console` integration tests. The integration
+test is configured by a "console-integration-tests" Maven profile. This profile can be activated manually or can more
+simply piggy-back on the `.glv` file in `gremlin-python`. Note that unlike `gremlin-python` the tests are actually
+integration tests and therefore must be actively switched on with `-DskipIntegrationTests=false`:
+
+[source,text]
+mvn clean install -pl gremlin-console -DskipIntegrationTests=false
+
+TIP: For those who do not have a full Maven environment, please see <<docker-integration,this section>> for how Docker
+can be used to help run tests.
+
+See the <<release-environment,Release Environment>> section for more information on release manager configurations.
+
+[[dotnet-environment]]
+=== DotNet Environment
+
+The build optionally requires link:https://www.microsoft.com/net/core[.NET Core SDK] (>=2.1.300) to work with the
+`gremlin-dotnet` module. If .NET Core SDK is not installed, TinkerPop will still build with Maven, but .NET projects
+will be skipped.
+
+`gremlin-dotnet` can be built and tested from the command line with:
+
+[source,text]
+mvn clean install -Pgremlin-dotnet
+
+which enables the "gremlin-dotnet" Maven profile or in a more automated fashion simply add a `.glv` file to the `src`
+and `test` directories of the `gremlin-dotnet` module  which will signify to Maven that the environment is .NET-ready.
+The `.glv` file need not have any contents and is ignored by Git. A standard `mvn clean install` will then build
+`gremlin-dotnet` in full.
+
+In order to pack the Gremlin.Net.Template project, it is also necessary to install link:http://www.mono-project.com/[Mono].
+The template can still be built and tested without Mono but packing will be skipped.
+To pack the template (which will also download the link:https://docs.microsoft.com/en-us/nuget/tools/nuget-exe-cli-reference[NuGet CLI tool])
+the `nuget` property has to be set:
+
+[source,text]
+mvn clean install -Dnuget
+
+TIP: For those who do not have a full Maven environment, please see <<docker-integration,this section>> for how Docker
+can be used to help run tests.
+
+See the <<release-environment,Release Environment>> section for more information on release manager configurations.
+
+[[nodejs-environment]]
+=== JavaScript Environment
+
+When building `gremlin-javascript`, mvn command will include a local copy of Node.js runtime and npm inside your project
+using `com.github.eirslett:frontend-maven-plugin` plugin. This copy of the Node.js runtime will not affect any
+other existing Node.js runtime instances in your machine.
+
+TIP: For those who do not have a full Maven environment, please see <<docker-integration,this section>> for how Docker
+can be used to help run tests.
+
+See the <<release-environment,Release Environment>> section for more information on release manager configurations.
+
+[[docker-environment]]
+=== Docker Environment
+
+The build optionally requires Docker to build Docker images of Gremlin Server and Gremlin Console. The Docker images
+can be built from the command line with:
+
+[source,text]
+----
+mvn clean install -pl gremlin-server,gremlin-console -DdockerImages
+----
+
+which enables the "docker-images" Maven profile.
+
+[[release-environment]]
+=== Release Environment
+
+This section is only useful to TinkerPop release managers and describes prerequisites related to deploying an official
+release of TinkerPop. All Apache releases must be signed. Please see link:http://www.apache.org/dev/release-signing.html[this guide]
+in the Apache documentation for instructions on to set up gpg. Keys should be added to KEYS files in both the
+link:https://dist.apache.org/repos/dist/dev/tinkerpop/KEYS[development] and
+link:https://dist.apache.org/repos/dist/release/tinkerpop/KEYS[release] distribution directories and committed
+using Apache Subversion (SVN).
+
+For Python releases, uploading to pypi uses link:https://pypi.python.org/pypi/twine[twine] which is automatically
+installed by the build process in maven. Twine refers to `HOME/.pypirc` file for configuration on the pypi deploy
+environments and username and password combinations. The file typically looks like this:
+
+[source,text]
+----
+[distutils]
+index-servers=
+    pypi
+    pypitest
+
+[pypitest]
+username = <username>
+password =
+
+[pypi]
+repository = https://pypi.python.org/pypi
+username = <username>
+password =
+----
+
+The release manager shall use the project's pypi credentials, which are available in the
+link:https://svn.apache.org/repos/private/pmc/tinkerpop[PMC SVN repository]. The `password` should be left blank so
+the deployment process in Maven will prompt for it at deployment time.
+
+For .NET releases, install link:http://www.mono-project.com/[Mono]. The release process is known to work with 5.0.1,
+so it is best to probably install that version. Release managers should probably also do an install of
+link:https://dist.nuget.org/win-x86-commandline/v3.4.4/nuget.exe[nuget 3.4.4] as it will help with environmental setup.
+To get an environment ready to deploy to NuGet, it is necessary to have a NuGet API key. First, create an account with
+link:https://www.nuget.org[nuget] and request that a PMC member add your account to the Gremlin.Net and
+the Gremlin.Net.Template package in nuget so that you can deploy. Next, generate an API key for your account on the
+nuget website. The API key should be added to `NuGet.Config` with the following:
+
+[source,text]
+----
+mono nuget.exe setApiKey [your-api-key]
+----
+
+This should update `~/.config/NuGet/NuGet.Config` a file with an entry containing the encrypted API key. On
+`mvn deploy`, this file will be referenced on the automated `nuget push`.
+
+To deploy `gremlin-javascript` on the link:https://www.npmjs.com[npm registry], the release manager must set the
+authentication information on the ~/.npmrc file. The easiest way to do that is to use the `npm adduser` command. This
+must be done only once, as the auth token doesn't have an expiration date and it's stored on your file system. If
+this account is newly created then request that a PMC member add your account to the "gremlin" package on npm.
+
+Deploying Docker images to link:https://hub.docker.com/[Docker Hub] requires an account that is a member of the TinkerPop
+organization. So if you don't already have an account on Docker Hub then create one and request that
+a PMC member adds your account to the TinkerPop organization. Afterwards, authentication information needs to be added to
+the `~/.docker/config.json` file. This information can simply be added with the `docker login` command which will ask for
+credentials. This must be done only once. Finally, `docker push` can be used to push images to Docker Hub which will
+be done automatically on `mvn deploy` or it can be triggered manually with `mvn dockerfile:push`.
+
+[[building-testing]]
+== Building and Testing
+
+The following commands are a mix of Maven flags and shell scripts that handle different build operations
+
+* Build project: `mvn clean install`
+** Build a specific module (e.g. `gremlin-server`) within the project: `mvn clean install -pl gremlin-server`
+** Build without assertions for "iterator leaks" which are enabled by default: `mvn clean install -DtestIteratorLeaks=false`
+** Specify specific tests in a TinkerPop Suite to run with the `GREMLIN_TESTS` environment variable, along with the
+Maven project list argument, e.g.:
++
+----
+export GREMLIN_TESTS='org.apache.tinkerpop.gremlin.process.traversal.step.map.PathTest$Traversals,org.apache.tinkerpop.gremlin.process.traversal.PathTest'
+mvn -Dmaven.javadoc.skip=true --projects tinkergraph-gremlin test
+----
+** Clean the `.groovy/grapes/org.apache.tinkerpop` directory on build: `mvn clean install -DcleanGrapes`
+** Turn off "heavy" logging in the "process" tests: `mvn clean install -DargLine="-DmuteTestLogs=true"`
+** The test suite for `neo4j-gremlin` is disabled by default - to turn it on: `mvn clean install -DincludeNeo4j`
+* Generate <<building-testing,test resources>> for `gremlin-io-test`: `mvn clean install -pl :gremlin-io-test -Dio`
+* Regenerate toy graph data (only necessary given changes to IO classes): `mvn clean install -Dio` from `tinkergraph-gremlin` directory
+** If there are changes to the Gryo format, it may be necessary to generate the Grateful Dead dataset from GraphSON (see `IoDataGenerationTest.shouldWriteGratefulDead`)
+* Start Gremlin Server with Docker using the standard test configuration: `docker/gremlin-server.sh`
+* Check license headers are present: `mvn apache-rat:check`
+* Build AsciiDocs (see <<documentation-environment,Documentation Environment>>): `bin/process-docs.sh`
+** Build AsciiDocs (but don't evaluate code blocks): `bin/process-docs.sh --dryRun`
+** Build AsciiDocs (but don't evaluate code blocks in specific files): `bin/process-docs.sh --dryRun docs/src/reference/the-graph.asciidoc,docs/src/tutorial/getting-started,...`
+** Build AsciiDocs (but evaluate code blocks only in specific files): `bin/process-docs.sh --fullRun docs/src/reference/the-graph.asciidoc,docs/src/tutorial/getting-started,...`
+** Process a single AsciiDoc file: +pass:[docs/preprocessor/preprocess-file.sh `pwd`/gremlin-console/target/apache-tinkerpop-gremlin-console-*-standalone "" "*" `pwd`/docs/src/xyz.asciidoc]+
+* Build JavaDocs/JSDoc: `mvn process-resources -Djavadoc`
+** Javadoc to `target/site/apidocs` directory
+** JSDoc to the `gremlin-javascript/src/main/javascript/gremlin-javascript/doc/` directory
+* Check for Apache License headers: `mvn apache-rat:check`
+* Specify the seed used for `Random` in tests `mvn clean install -DtestSeed` - useful when a test fails, the seed will be printed in the build output so that the test can run with the same version of random (look for "TestHelper" logger in output)
+* Check for newer dependencies: `mvn versions:display-dependency-updates` or `mvn versions:display-plugin-updates`
+* Check the effective `pom.xml`: `mvn -pl gremlin-python -Pglv-python help:effective-pom -Doutput=withProfilePom.xml`
+* Deploy JavaDocs/AsciiDocs: `bin/publish-docs.sh svn-username`
+* Integration Tests: `mvn verify -DskipIntegrationTests=false`
+** Execute with the `-DincludeNeo4j` option to include transactional tests.
+** Execute with the `-DuseEpoll` option to try to use Netty native transport (works on Linux, but will fallback to Java NIO on other OS).
+* Benchmarks: `mvn verify -DskipBenchmarks=false`
+** Reports are generated to the console and to `gremlin-tools/gremlin-benchmark/target/reports/benchmark`.
+* Test coverage report: `mvn clean install -Dcoverage` - note that the `install` is necessary because report aggregation is bound to that part of the lifecycle.
+** Reports are generated to `gremlin-tools/gremlin-coverage/target/site`.
+* `cd site`
+** Generate web site locally: `bin/generate-home.sh`
+** Publish web site: `bin/publish-home.sh <username>`
+
+[[docker-integration]]
+== Docker Integration
+
+TinkerPop provides a shell script, that can start several build tasks within a Docker container. The
+required Docker images will be built automatically if they don't exist yet. Thus the first invocation
+of the Docker script is expected to take some time.
+
+The script can be found under `PROJECT_HOME/docker/build.sh`. The following tasks are currently
+supported:
+
+* run standard test suite
+* run integration tests
+* build Java docs
+* build user docs
+
+A list of command line options is provided by `docker/build.sh --help`. The container will install,
+configure and start all required dependencies, such as Hadoop.
+
+Options can be passed to Docker by setting the `TINKERPOP_DOCKER_OPTS` environment variable. A speed boost can
+be gained at the expense of memory by using tmpfs and the special directory `/usr/src/tinkermem`.
+
+[source,bash]
+.Build in-memory
+----
+TINKERPOP_DOCKER_OPTS="--tmpfs /usr/src/tinkermem:exec,mode=0755,rw,noatime,size=2000m"
+----
+
+[source,bash]
+.Disable IPv6 for Hadoop
+----
+TINKERPOP_DOCKER_OPTS="--sysctl net.ipv6.conf.all.disable_ipv6=1 --sysctl net.ipv6.conf.default.disable_ipv6=1"
+----
+
+A custom maven settings.xml can be supplied, for example, to point to a local proxy. Copy the `settings.xml` to the
+`PROJECT_HOME/` directory. The Docker script will detect and copy it to the running container.
+
+If the container is used to generate the user docs, it will start a web server and show the URL that
+is used to host the HTML docs.
+
+After finishing all tasks, the script will immediately destroy the container.
+
+Docker can also be helpful to developers who do not want to run tests from a Maven environment, which may be a bit
+opaque when dealing with test failures and largely unhelpful for debugging. This situation is typically case for
+developers doing work on Gremlin Language Variants (e.g. Python). To help alleviate this problem, developers can
+start a standalone Gremlin Server with its standard test configuration that is used in the standard Maven build.
+
+Generally speaking, most developers will want to test their code against the latest build of Gremlin Server in the
+TinkerPop repository. To do that, first be sure to build a Docker image of the current code:
+
+[source,bash]
+mvn clean install -DskipTests
+
+Next, generate the a Docker image for Gremlin Server with:
+
+[source,bash]
+mvn clean install -pl :gremlin-server -DdockerImages -DskipTests
+
+IMPORTANT: If changes are made to the repository that need to be reflected in the Gremlin Server Docker image then
+the old image should be removed and then the above commands re-executed.
+
+Finally, start the server with:
+
+[source,bash]
+docker/gremlin-server.sh
+
+Starting Gremlin Server this way makes it possible to run Gremlin Language Variant tests without Maven (for example,
+directly from a debugger) which should greatly reduce development friction for these environments.
+
+It is also possible to specify the exact version of Gremlin Server to run with the test configuration. This version
+should be an existing Docker image version and must be an explicit version that maps to an actual TinkerPop artifact:
+
+[source,bash]
+docker/gremlin-server.sh 3.4.2
+
+To be a bit more clear, the version can not be a Docker tag like "latest" because there is no such TinkerPop artifact
+that has been published with that version number.
+
+== IDE Setup with Intellij
+
+This section refers specifically to setup within Intellij.  TinkerPop has a module called `gremlin-shaded` which
+contains shaded dependencies for some libraries that are widely used and tend to introduce conflicts.  To ensure
+that Intellij properly interprets this module after importing the Maven `pom.xml` perform the following steps:
+
+. Build `gremlin-shaded` from the command line with `mvn clean install`.
+. Right-click on the `gremlin-shaded` module in the project viewer of Intellij and select "Remove module". If this menu
+option is not available (as is the case in newer versions of Intellij - first noticed in 13.1.5), then open the "Maven
+Projects" side panel, right click the `gremlin-shaded` module and select "Ignore Project".
+. In the "Maven Projects" Tool window and click the tool button for "Reimport All Maven projects" (go to
+`View | Tool Windows | Maven Projects` on the main menu if this panel is not activated).
+. At this point it should be possible to compile and run the tests within Intellij, but in the worst case, use
+`File | Invalidate Caches/Restart` to ensure that indices properly rebuild.
+
+Note that it may be necessary to re-execute these steps if the `gremlin-shaded` `pom.xml` is ever updated.
+
+Developers working on the `neo4j-gremlin` module should enabled the `include-neo4j` Maven profile in Intellij.
+This will ensure that tests will properly execute within the IDE.
+
+If Intellij complains about "duplicate sources" for the Groovy files when attempting to compile/run tests, then
+install the link:http://plugins.jetbrains.com/plugin/7442?pr=idea[GMavenPlus Intellij plugin].
+
+The `gremlin-core` module uses a Java annotation processor to help support DSLs. To support this capability be sure
+that:
+
+. `File | Settings | Compiler | Annotation Processors` has the checkbox with the "Enable annotation processing" checked.
+Intellij should be able to detect the processor automatically on build.
+. The `gremlin-core/target` directory should not be hidden and `target/classes`, `target/generated-sources` and
+`target/generated-test-sources` should be marked as "Generated Sources Root". If they are not setup that way by
+Intellij by default then simply right-click on them use the "Mark Directory with" option to make the appropriate
+selections.

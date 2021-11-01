@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+
+    <context:property-placeholder location="classpath:props/kgraph_service.properties" ignore-unresolvable="true"/>
+
+    <context:component-scan base-package="com.bkjk.kgraph.web"/>
+    <context:component-scan base-package="com.bkjk.kgraph.service"/>
+
+    <!-- 注意扫描了PlatformExceptionHandler -->
+    <!--context:component-scan base-package="com.bkjk.platform.exception.advice"/-->
+
+    <!-- 注意拦截器配置 -->
+    <mvc:interceptors>
+        <mvc:interceptor>
+            <mvc:mapping path="${passport.intercept.url.patterns:/com.bkjk.kgraph.api/**}"/>
+            <mvc:exclude-mapping path="${passport.exclusive.url.patterns:}"/>
+            <bean class="com.bkjk.platform.passport.interceptors.UcPassportAuthenticationInterceptor"/>
+        </mvc:interceptor>
+    </mvc:interceptors>
+
+    <!-- 注解驱动 -->
+    <mvc:annotation-driven/>
+
+</beans>
